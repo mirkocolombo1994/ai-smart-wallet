@@ -21,16 +21,16 @@ class TransactionListItem extends StatelessWidget {
     final bool isIncome = transaction.type == TransactionType.income;
     final bool isCard = transaction.type == TransactionType.expenseCard;
 
-    Color iconBg = const Color(0xFFF43F5E).withOpacity(0.1);
+    Color iconBg = const Color(0xFFF43F5E).withValues(alpha: 0.1);
     Color iconFg = const Color(0xFFF43F5E);
     IconData icon = Icons.arrow_downward_rounded;
 
     if (isIncome) {
-      iconBg = const Color(0xFF10B981).withOpacity(0.1);
+      iconBg = const Color(0xFF10B981).withValues(alpha: 0.1);
       iconFg = const Color(0xFF10B981);
       icon = Icons.arrow_upward_rounded;
     } else if (isCard) {
-      iconBg = const Color(0xFFF59E0B).withOpacity(0.1);
+      iconBg = const Color(0xFFF59E0B).withValues(alpha: 0.1);
       iconFg = const Color(0xFFF59E0B);
       icon = Icons.credit_card_rounded;
     }
@@ -39,9 +39,9 @@ class TransactionListItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withOpacity(0.6),
+        color: const Color(0xFF1E293B).withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF334155).withOpacity(0.5)),
+        border: Border.all(color: const Color(0xFF334155).withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -68,7 +68,7 @@ class TransactionListItem extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF38BDF8).withOpacity(0.1),
+                            color: const Color(0xFF38BDF8).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -86,7 +86,7 @@ class TransactionListItem extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withOpacity(0.1),
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -203,9 +203,9 @@ class TransactionListItem extends StatelessWidget {
                         padding: const EdgeInsets.all(10),
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEF4444).withOpacity(0.1),
+                          color: const Color(0xFFEF4444).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.3)),
+                          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [

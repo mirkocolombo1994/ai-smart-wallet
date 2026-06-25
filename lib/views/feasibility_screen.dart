@@ -44,7 +44,7 @@ class _FeasibilityScreenState extends State<FeasibilityScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withOpacity(0.1),
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.psychology_rounded, color: Color(0xFF6366F1)),
@@ -85,9 +85,9 @@ class _FeasibilityScreenState extends State<FeasibilityScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0284C7).withOpacity(0.1),
+                        color: const Color(0xFF0284C7).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: const Color(0xFF0284C7).withOpacity(0.3)),
+                        border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         AppStrings.get('optional'),
@@ -454,15 +454,15 @@ class _FeasibilityScreenState extends State<FeasibilityScreen> {
   }
 
   Color _getResultBgColor() {
-    if (_status == 'red') return const Color(0xFFF43F5E).withOpacity(0.08);
-    if (_status == 'yellow') return const Color(0xFFF59E0B).withOpacity(0.08);
-    return const Color(0xFF10B981).withOpacity(0.08);
+    if (_status == 'red') return const Color(0xFFF43F5E).withValues(alpha: 0.08);
+    if (_status == 'yellow') return const Color(0xFFF59E0B).withValues(alpha: 0.08);
+    return const Color(0xFF10B981).withValues(alpha: 0.08);
   }
 
   Color _getResultBorderColor() {
-    if (_status == 'red') return const Color(0xFFF43F5E).withOpacity(0.4);
-    if (_status == 'yellow') return const Color(0xFFF59E0B).withOpacity(0.4);
-    return const Color(0xFF10B981).withOpacity(0.4);
+    if (_status == 'red') return const Color(0xFFF43F5E).withValues(alpha: 0.4);
+    if (_status == 'yellow') return const Color(0xFFF59E0B).withValues(alpha: 0.4);
+    return const Color(0xFF10B981).withValues(alpha: 0.4);
   }
 
   Color _getResultTextColor() {

@@ -78,7 +78,7 @@ class DashboardScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981).withOpacity(0.1),
+                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -506,7 +506,7 @@ class DashboardScreen extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             const Color(0xFF1E293B),
-            const Color(0xFF0F172A).withOpacity(0.4),
+            const Color(0xFF0F172A).withValues(alpha: 0.4),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

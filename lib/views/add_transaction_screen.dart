@@ -113,9 +113,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0284C7).withOpacity(0.1),
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: const Color(0xFF0284C7).withOpacity(0.3)),
+                          border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           AppStrings.get('optional'),

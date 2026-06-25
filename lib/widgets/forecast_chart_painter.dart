@@ -21,7 +21,7 @@ class ForecastChartPainter extends CustomPainter {
     final fillPaint = Paint()..style = PaintingStyle.fill;
 
     final gridPaint = Paint()
-      ..color = const Color(0xFF334155).withOpacity(0.3)
+      ..color = const Color(0xFF334155).withValues(alpha: 0.3)
       ..strokeWidth = 1.0;
 
     // Disegna la griglia orizzontale
@@ -62,7 +62,7 @@ class ForecastChartPainter extends CustomPainter {
 
     // Applica gradiente sotto il grafico
     fillPaint.shader = LinearGradient(
-      colors: [lineColor.withOpacity(0.15), Colors.transparent],
+      colors: [lineColor.withValues(alpha: 0.15), Colors.transparent],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ).createShader(Rect.fromLTRB(0, 0, size.width, size.height));
