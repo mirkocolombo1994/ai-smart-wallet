@@ -1,0 +1,50 @@
+name: Flutter Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggera solo quando viene caricato un tag che inizia con "v" (es. v1.0.0)
+
+jobs:
+  build_and_release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write # Necessario per permettere a GitHub Actions di creare la Release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        # L'APK serve per permettere il download e l'installazione diretta da GitHub
+        run: flutter build apk --release
+
+      - name: Build App Bundle (AAB)
+        # L'AAB è il formato richiesto dal Google Play Store
+        run: flutter build appbundle --release
+
+      - name: Create GitHub Release
+        # Utilizziamo l'azione ufficiale per creare la release e allegare i file
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+          generate_release_notes: true
