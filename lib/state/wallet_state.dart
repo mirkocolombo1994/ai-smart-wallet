@@ -179,7 +179,7 @@ class WalletState extends ChangeNotifier {
         date: realDate,
         type: targetType,
         isProjected: false, // Diventa transazione reale
-        recurrence: null, // Rimuoviamo la ricorrenza dalla transazione reale
+        clearRecurrence: true, // Rimuoviamo la ricorrenza dalla transazione reale
       );
 
       _saveToPrefs();

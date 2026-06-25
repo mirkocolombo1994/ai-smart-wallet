@@ -37,6 +37,7 @@ class Transaction {
     TransactionType? type,
     bool? isProjected,
     String? recurrence,
+    bool clearRecurrence = false,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -46,7 +47,7 @@ class Transaction {
       category: category ?? this.category,
       type: type ?? this.type,
       isProjected: isProjected ?? this.isProjected,
-      recurrence: recurrence ?? this.recurrence,
+      recurrence: clearRecurrence ? null : (recurrence ?? this.recurrence),
     );
   }
 
