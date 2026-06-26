@@ -5,8 +5,13 @@ import 'package:flutter/material.dart';
 class ForecastChartPainter extends CustomPainter {
   final List<double> data;
   final Color lineColor;
+  final int? selectedIndex;
 
-  ForecastChartPainter({required this.data, required this.lineColor});
+  ForecastChartPainter({
+    required this.data, 
+    required this.lineColor,
+    this.selectedIndex,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -69,10 +74,30 @@ class ForecastChartPainter extends CustomPainter {
 
     canvas.drawPath(fillPath, fillPaint);
     canvas.drawPath(path, paint);
+
+    // Disegna l'indicatore se c'è un elemento selezionato
+    if (selectedIndex != null && selectedIndex! >= 0 && selectedIndex! < data.length) {
+      final selX = selectedIndex! * dx;
+      final selY = getY(data[selectedIndex!]);
+
+      // Linea verticale
+      final indicatorPaint = Paint()
+        ..color = lineColor.withValues(alpha: 0.5)
+        ..strokeWidth = 1.0;
+      canvas.drawLine(Offset(selX, 0), Offset(selX, size.height), indicatorPaint);
+
+      // Pallino
+      final circlePaint = Paint()..color = lineColor;
+      canvas.drawCircle(Offset(selX, selY), 4, circlePaint);
+      final innerCirclePaint = Paint()..color = Colors.white;
+      canvas.drawCircle(Offset(selX, selY), 2, innerCirclePaint);
+    }
   }
 
   @override
   bool shouldRepaint(covariant ForecastChartPainter oldDelegate) {
-    return oldDelegate.data != data || oldDelegate.lineColor != lineColor;
+    return oldDelegate.data != data || 
+           oldDelegate.lineColor != lineColor ||
+           oldDelegate.selectedIndex != selectedIndex;
   }
 }

@@ -5,7 +5,8 @@ import '../state/wallet_state.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final WalletState state;
-  const AddTransactionScreen({super.key, required this.state});
+  final Transaction? editingTransaction;
+  const AddTransactionScreen({super.key, required this.state, this.editingTransaction});
 
   @override
   State<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -23,6 +24,22 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   String? _recurrence; // null, 'weekly', 'monthly', 'yearly'
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.editingTransaction != null) {
+      final tx = widget.editingTransaction!;
+      _descController.text = tx.description;
+      _amountController.text = tx.amount.toString();
+      _isProjected = tx.isProjected;
+      _flow = tx.type == TransactionType.income ? 'income' : 'expense';
+      _destination = tx.type == TransactionType.expenseCard ? 'card' : 'main';
+      _category = tx.category;
+      _selectedDate = tx.date;
+      _recurrence = tx.recurrence;
+    }
+  }
+
+  @override
   void dispose() {
     _descController.dispose();
     _amountController.dispose();
@@ -36,9 +53,18 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.get('addMovement'),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              if (widget.editingTransaction != null)
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              Text(
+                widget.editingTransaction != null ? 'Modifica Movimento' : AppStrings.get('addMovement'),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
 
@@ -522,27 +548,50 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       finalType = TransactionType.expenseCard;
     }
 
-    final newTx = Transaction(
-      id: 'tx-${DateTime.now().millisecondsSinceEpoch}',
-      description: finalDesc,
-      amount: amount,
-      date: _selectedDate,
-      category: _category,
-      type: finalType,
-      isProjected: _isProjected,
-      recurrence: _recurrence,
-    );
-
-    final success = widget.state.addTransaction(newTx);
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.get('saveSuccess')),
-          duration: const Duration(seconds: 1),
-        ),
+    if (widget.editingTransaction != null) {
+      final updatedTx = widget.editingTransaction!.copyWith(
+        description: finalDesc,
+        amount: amount,
+        date: _selectedDate,
+        category: _category,
+        type: finalType,
+        isProjected: _isProjected,
+        recurrence: _recurrence,
+        clearRecurrence: _recurrence == null,
       );
-      _clearFields();
-      widget.state.changeTab(0); // Ritorna a home
+      final success = widget.state.updateTransaction(updatedTx);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Modifica salvata'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } else {
+      final newTx = Transaction(
+        id: 'tx-${DateTime.now().millisecondsSinceEpoch}',
+        description: finalDesc,
+        amount: amount,
+        date: _selectedDate,
+        category: _category,
+        type: finalType,
+        isProjected: _isProjected,
+        recurrence: _recurrence,
+      );
+
+      final success = widget.state.addTransaction(newTx);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppStrings.get('saveSuccess')),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+        _clearFields();
+        widget.state.changeTab(0); // Ritorna a home
+      }
     }
   }
 }

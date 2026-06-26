@@ -12,6 +12,8 @@ class LedgerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Filtra transazioni
     final List<Transaction> filtered = state.transactions.where((tx) {
+      if (tx.isProjected && tx.associatedTransactionId != null) return false; // Hide concretized projections
+
       if (state.ledgerFilter == 'projected') return tx.isProjected;
       if (state.ledgerFilter == 'actual') return !tx.isProjected;
       return true;

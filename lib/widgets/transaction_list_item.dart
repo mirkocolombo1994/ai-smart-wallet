@@ -3,6 +3,7 @@ import '../constants/app_strings.dart';
 import '../models/transaction.dart';
 import '../state/wallet_state.dart';
 import '../utils/currency_formatter.dart';
+import '../views/add_transaction_screen.dart';
 
 class TransactionListItem extends StatelessWidget {
   final Transaction transaction;
@@ -35,15 +36,32 @@ class TransactionListItem extends StatelessWidget {
       icon = Icons.credit_card_rounded;
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF334155).withValues(alpha: 0.5)),
-      ),
-      child: Row(
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              body: SafeArea(
+                child: AddTransactionScreen(
+                  state: state,
+                  editingTransaction: transaction,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B).withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF334155).withValues(alpha: 0.5)),
+        ),
+        child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
@@ -136,7 +154,7 @@ class TransactionListItem extends StatelessWidget {
           )
         ],
       ),
-    );
+    ));
   }
 
   String _getLocalCategory(String category) {

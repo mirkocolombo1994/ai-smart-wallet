@@ -3,8 +3,9 @@ import '../constants/app_strings.dart';
 import '../state/wallet_state.dart';
 import 'add_transaction_screen.dart';
 import 'dashboard_screen.dart';
-import 'feasibility_screen.dart';
+import 'ai_forecast_screen.dart';
 import 'ledger_screen.dart';
+import 'credit_card_screen.dart';
 
 class WalletAppScaffold extends StatefulWidget {
   const WalletAppScaffold({super.key});
@@ -29,9 +30,10 @@ class _WalletAppScaffoldState extends State<WalletAppScaffold> {
   Widget build(BuildContext context) {
     final List<Widget> screens = [
       DashboardScreen(state: _state),
-      FeasibilityScreen(state: _state),
+      AIForecastScreen(state: _state),
       AddTransactionScreen(state: _state),
       LedgerScreen(state: _state),
+      CreditCardScreen(state: _state),
     ];
 
     return Scaffold(
@@ -48,13 +50,10 @@ class _WalletAppScaffoldState extends State<WalletAppScaffold> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildNavItem(0, Icons.home_rounded, AppStrings.get('navHome')),
-            _buildNavItem(
-              1,
-              Icons.psychology_rounded,
-              AppStrings.get('navFeasibility'),
-            ),
+            _buildNavItem(1, Icons.auto_awesome_rounded, AppStrings.get('navAIForecast')),
             _buildAddNavItem(),
             _buildNavItem(3, Icons.receipt_long_rounded, AppStrings.get('navLedger')),
+            _buildNavItem(4, Icons.credit_card_rounded, 'Carte'),
           ],
         ),
       ),

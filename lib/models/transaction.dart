@@ -15,6 +15,7 @@ class Transaction {
   final TransactionType type;
   final bool isProjected; // true = Previsione, false = Movimento Reale Effettivo
   final String? recurrence; // null = Nessuna, 'weekly' = Settimanale, 'monthly' = Mensile, 'yearly' = Annuale
+  final String? associatedTransactionId; // Link tra previsione e transazione reale
 
   Transaction({
     required this.id,
@@ -25,6 +26,7 @@ class Transaction {
     required this.type,
     required this.isProjected,
     this.recurrence,
+    this.associatedTransactionId,
   });
 
   /// Permette di clonare e modificare facilmente la transazione (es. in fase di concretizzazione)
@@ -38,6 +40,7 @@ class Transaction {
     bool? isProjected,
     String? recurrence,
     bool clearRecurrence = false,
+    String? associatedTransactionId,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -48,6 +51,7 @@ class Transaction {
       type: type ?? this.type,
       isProjected: isProjected ?? this.isProjected,
       recurrence: clearRecurrence ? null : (recurrence ?? this.recurrence),
+      associatedTransactionId: associatedTransactionId ?? this.associatedTransactionId,
     );
   }
 
@@ -62,6 +66,7 @@ class Transaction {
       'type': type.name,
       'isProjected': isProjected,
       'recurrence': recurrence,
+      'associatedTransactionId': associatedTransactionId,
     };
   }
 
@@ -76,6 +81,7 @@ class Transaction {
       type: TransactionType.values.byName(json['type'] as String),
       isProjected: json['isProjected'] as bool,
       recurrence: json['recurrence'] as String?,
+      associatedTransactionId: json['associatedTransactionId'] as String?,
     );
   }
 }

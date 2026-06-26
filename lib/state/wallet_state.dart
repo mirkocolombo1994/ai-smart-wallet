@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/mock_data.dart';
 import '../models/transaction.dart';
+import '../constants/app_strings.dart';
 
 /// Gestore globale dello stato dell'applicazione (MVVM / Controller)
 class WalletState extends ChangeNotifier {
   static const String _prefsKey = 'transactions_list';
   static const String _ccStartDayKey = 'cc_start_day';
   static const String _ccPaymentDayKey = 'cc_payment_day';
+  static const String _languageKey = 'app_language';
 
   int _currentTab = 0;
   int get currentTab => _currentTab;
@@ -51,6 +53,20 @@ class WalletState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> changeLanguage(AppLanguage lang) async {
+    AppStrings.currentLanguage = lang;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_languageKey, lang == AppLanguage.en ? 'en' : 'it');
+    notifyListeners();
+  }
+
+  Future<void> deleteAllData() async {
+    _transactions.clear();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsKey);
+    notifyListeners();
+  }
+
   Future<void> changeCreditCardSettings(int startDay, int paymentDay) async {
     _ccStartDay = startDay;
     _ccPaymentDay = paymentDay;
@@ -68,6 +84,13 @@ class WalletState extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _ccStartDay = prefs.getInt(_ccStartDayKey) ?? 1;
       _ccPaymentDay = prefs.getInt(_ccPaymentDayKey) ?? 15;
+      
+      final savedLang = prefs.getString(_languageKey);
+      if (savedLang == 'en') {
+        AppStrings.currentLanguage = AppLanguage.en;
+      } else {
+        AppStrings.currentLanguage = AppLanguage.it;
+      }
 
       final listString = prefs.getString(_prefsKey);
       if (listString != null && listString.isNotEmpty) {
@@ -125,6 +148,17 @@ class WalletState extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool updateTransaction(Transaction updatedTx) {
+    final index = _transactions.indexWhere((tx) => tx.id == updatedTx.id);
+    if (index != -1) {
+      _transactions[index] = updatedTx;
+      _saveToPrefs();
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
   bool concretizeTransaction(
     String id,
     String newDescription,
@@ -172,14 +206,22 @@ class WalletState extends ChangeNotifier {
         _transactions.add(futureTx);
       }
 
-      // Aggiorniamo la transazione corrente rendendola reale
-      _transactions[index] = oldTx.copyWith(
+      // Creiamo la transazione reale
+      final realTx = Transaction(
+        id: 'tx-${DateTime.now().millisecondsSinceEpoch}-real',
         description: newDescription,
         amount: newAmount,
         date: realDate,
+        category: oldTx.category,
         type: targetType,
         isProjected: false, // Diventa transazione reale
-        clearRecurrence: true, // Rimuoviamo la ricorrenza dalla transazione reale
+      );
+      _transactions.add(realTx);
+
+      // Aggiorniamo la transazione corrente (previsione)
+      _transactions[index] = oldTx.copyWith(
+        associatedTransactionId: realTx.id, // Colleghiamo alla reale
+        clearRecurrence: true, // Rimuoviamo la ricorrenza dalla transazione prevista
       );
 
       _saveToPrefs();
@@ -189,31 +231,14 @@ class WalletState extends ChangeNotifier {
     return false;
   }
 
-  double get saldoEffettivo {
-    double total = 0.0;
-    for (var tx in _transactions) {
-      if (!tx.isProjected) {
-        if (tx.type == TransactionType.income) {
-          total += tx.amount;
-        } else if (tx.type == TransactionType.expenseMain) {
-          total -= tx.amount;
-        }
-        // Nota: expenseCard è esclusa dal calcolo liquido immediato
-      }
-    }
-    return total;
-  }
+  // ----- NUOVE METRICHE DASHBOARD -----
 
-  double get saldoPrevisto {
+  double get saldoEffettivoOdierno {
+    final now = DateTime.now();
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
     double total = 0.0;
     for (var tx in _transactions) {
-      if (tx.isProjected) {
-        if (tx.type == TransactionType.income) {
-          total += tx.amount;
-        } else {
-          total -= tx.amount;
-        }
-      } else {
+      if (!tx.isProjected && tx.date.isBefore(todayEnd)) {
         if (tx.type == TransactionType.income) {
           total += tx.amount;
         } else if (tx.type == TransactionType.expenseMain) {
@@ -224,7 +249,33 @@ class WalletState extends ChangeNotifier {
     return total;
   }
 
-  double get differenzaSaldi => saldoPrevisto - saldoEffettivo;
+  double get saldoPrevistoOdierno {
+    final now = DateTime.now();
+    final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    double total = 0.0;
+    for (var tx in _transactions) {
+      if (tx.date.isBefore(todayEnd)) {
+        if (tx.isProjected) {
+          if (tx.type == TransactionType.income) {
+            total += tx.amount;
+          } else if (tx.type == TransactionType.expenseMain || tx.type == TransactionType.expenseCard) {
+            total -= tx.amount;
+          }
+        }
+      }
+    }
+    return total;
+  }
+
+  double get differenzaSaldiOdierna {
+    return saldoEffettivoOdierno - saldoPrevistoOdierno;
+  }
+
+  // Supporto retro-compatibilità ove usato
+  double get saldoEffettivo => saldoEffettivoOdierno;
+  double get saldoPrevisto => saldoPrevistoOdierno;
+  double get differenzaSaldi => differenzaSaldiOdierna;
+  double get differenzaFinoAdOggi => differenzaSaldiOdierna;
 
   /// Helper per calcolare le date di inizio e fine del ciclo di fatturazione della carta di credito per una certa data
   Map<String, DateTime> getCreditCardPeriod(DateTime targetDate) {
@@ -245,22 +296,20 @@ class WalletState extends ChangeNotifier {
   }
 
   /// Somma le spese carta di credito per il periodo di fatturazione corrente
-  double get speseCartaCredito {
+  double get speseCartaCreditoMeseCorrente {
     final period = getCreditCardPeriod(DateTime.now());
-    final start = period['start']!;
-    final end = period['end']!;
-
-    double total = 0.0;
-    for (var tx in _transactions) {
-      if (!tx.isProjected && tx.type == TransactionType.expenseCard) {
-        if ((tx.date.isAfter(start) || tx.date.isAtSameMomentAs(start)) &&
-            (tx.date.isBefore(end) || tx.date.isAtSameMomentAs(end))) {
-          total += tx.amount;
-        }
-      }
-    }
-    return total;
+    return getCreditCardExpensesForPeriod(period['start']!, period['end']!);
   }
+
+  double get speseCartaCreditoMesePrecedente {
+    // Il mese precedente si ottiene andando indietro di un mese dalla data odierna, o prendendo la data "start" - 1 giorno.
+    final period = getCreditCardPeriod(DateTime.now());
+    final prevPeriod = getCreditCardPeriod(period['start']!.subtract(const Duration(days: 1)));
+    return getCreditCardExpensesForPeriod(prevPeriod['start']!, prevPeriod['end']!);
+  }
+
+  // Retro-compatibilità
+  double get speseCartaCredito => speseCartaCreditoMeseCorrente;
 
   /// Somma le spese carta di credito per un periodo di fatturazione specifico (usato nella proiezione)
   double getCreditCardExpensesForPeriod(DateTime start, DateTime end) {
