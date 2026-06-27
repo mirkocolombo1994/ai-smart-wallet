@@ -581,8 +581,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         recurrence: _recurrence,
       );
 
-      final success = widget.state.addTransaction(newTx);
-      if (success) {
+      final result = widget.state.addTransaction(newTx);
+      if (result != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppStrings.get('saveSuccess')),
@@ -591,6 +591,22 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         );
         _clearFields();
         widget.state.changeTab(0); // Ritorna a home
+        
+        if (result.startsWith("RECURRING:")) {
+          final desc = result.split(":")[1];
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('La spesa "$desc" sembra ricorrente.'),
+              duration: const Duration(seconds: 5),
+              action: SnackBarAction(
+                label: 'RENDI MENSILE',
+                onPressed: () {
+                  widget.state.makeTransactionsRecurring(desc, 'monthly');
+                },
+              ),
+            ),
+          );
+        }
       }
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_strings.dart';
 import '../state/wallet_state.dart';
+import '../ui/screens/user_profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final WalletState state;
@@ -65,6 +66,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                   ),
                 ),
+              ),
+            ),
+            // Account
+            _buildSectionTitle('Account', Icons.account_circle),
+            Card(
+              color: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: ListTile(
+                title: const Text('Profilo Utente'),
+                trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 24),

@@ -89,8 +89,7 @@ class WalletState extends ChangeNotifier {
   }
 
   void _loadInitialMockData() {
-    final now = DateTime.now();
-    _transactions.addAll(getInitialMockData(now));
+    // Mock data rimosso per permettere l'utilizzo reale senza dati finti iniziali.
   }
 
   Future<void> _loadFromPrefs() async {
@@ -183,20 +182,46 @@ class WalletState extends ChangeNotifier {
 
   Future<void> resetToMockData() async {
     _transactions.clear();
-    _loadInitialMockData();
     await _saveToPrefs();
     notifyListeners();
   }
 
-  bool addTransaction(Transaction tx) {
+  String? addTransaction(Transaction tx) {
     // Validazione temporale: transazioni reali non possono essere collocate nel futuro
     if (!tx.isProjected && tx.date.isAfter(DateTime.now())) {
-      return false;
+      return null; // Failure
     }
     _transactions.add(tx);
     _saveToPrefs();
     notifyListeners();
-    return true;
+    
+    // Rilevamento ricorrenze
+    if (!tx.isProjected && (tx.recurrence == null || tx.recurrence!.isEmpty)) {
+      int count = 0;
+      for (var existing in _transactions) {
+        if (!existing.isProjected && 
+            existing.description.toLowerCase().trim() == tx.description.toLowerCase().trim() && 
+            existing.amount == tx.amount &&
+            (existing.recurrence == null || existing.recurrence!.isEmpty)) {
+          count++;
+        }
+      }
+      if (count >= 3) {
+        return "RECURRING:${tx.description}"; // Rilevato pattern!
+      }
+    }
+    return "SUCCESS";
+  }
+
+  void makeTransactionsRecurring(String description, String recurrence) {
+    for (int i = 0; i < _transactions.length; i++) {
+      if (!_transactions[i].isProjected && 
+          _transactions[i].description.toLowerCase().trim() == description.toLowerCase().trim()) {
+        _transactions[i] = _transactions[i].copyWith(recurrence: recurrence);
+      }
+    }
+    _saveToPrefs();
+    notifyListeners();
   }
 
   void deleteTransaction(String id) {

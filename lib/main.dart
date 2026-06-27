@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'constants/app_strings.dart';
 import 'views/wallet_app_scaffold.dart';
 import 'ui/screens/auth_screen.dart';
+import 'ui/screens/onboarding_screen.dart';
 import 'services/biometric_service.dart';
 import 'services/notification_service.dart';
 
@@ -27,14 +29,96 @@ void main() async {
   runApp(const SmartWalletApp());
 }
 
-class SmartWalletApp extends StatefulWidget {
+class SmartWalletApp extends StatelessWidget {
   const SmartWalletApp({super.key});
 
   @override
-  State<SmartWalletApp> createState() => _SmartWalletAppState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: AppStrings.get('appTitle'),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        primaryColor: const Color(0xFF6366F1),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF6366F1),
+          secondary: Color(0xFF10B981),
+          surface: Color(0xFF1E293B),
+        ),
+        fontFamily: 'Inter',
+        useMaterial3: true,
+      ),
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          }
+
+          if (snapshot.hasData && snapshot.data != null) {
+            // L'utente è loggato, avviamo il controllo biometrico.
+            return const BiometricWrapper(
+              child: InitialDecisionScreen(),
+            );
+          }
+
+          // Non loggato, andiamo alla schermata di login. NESSUN controllo biometrico.
+          return const AuthScreen();
+        },
+      ),
+    );
+  }
 }
 
-class _SmartWalletAppState extends State<SmartWalletApp> with WidgetsBindingObserver {
+class InitialDecisionScreen extends StatefulWidget {
+  const InitialDecisionScreen({super.key});
+
+  @override
+  State<InitialDecisionScreen> createState() => _InitialDecisionScreenState();
+}
+
+class _InitialDecisionScreenState extends State<InitialDecisionScreen> {
+  bool _isLoading = true;
+  bool _hasSeenOnboarding = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboarding();
+  }
+
+  Future<void> _checkOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    
+    if (!_hasSeenOnboarding) {
+      return const OnboardingScreen();
+    }
+    
+    return const WalletAppScaffold();
+  }
+}
+
+class BiometricWrapper extends StatefulWidget {
+  final Widget child;
+  const BiometricWrapper({super.key, required this.child});
+
+  @override
+  State<BiometricWrapper> createState() => _BiometricWrapperState();
+}
+
+class _BiometricWrapperState extends State<BiometricWrapper> with WidgetsBindingObserver {
   final BiometricService _biometricService = BiometricService();
   bool _isAuthenticatedBiometrically = false;
   bool _isAuthenticating = false;
@@ -80,7 +164,6 @@ class _SmartWalletAppState extends State<SmartWalletApp> with WidgetsBindingObse
         });
       }
     } else {
-      // Se la biometria non è disponibile, passiamo oltre.
       if (mounted) {
         setState(() {
           _isAuthenticatedBiometrically = true;
@@ -92,47 +175,29 @@ class _SmartWalletAppState extends State<SmartWalletApp> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppStrings.get('appTitle'),
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
-        primaryColor: const Color(0xFF6366F1),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF6366F1),
-          secondary: Color(0xFF10B981),
-          surface: Color(0xFF1E293B),
-        ),
-        fontFamily: 'Inter',
-        useMaterial3: true,
-      ),
-      home: _buildHome(),
-    );
-  }
-
-  Widget _buildHome() {
     if (!_isAuthenticatedBiometrically) {
-      return const Scaffold(
+      return Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.lock_outline, size: 80, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text(
+                'Sblocco richiesto',
+                style: TextStyle(fontSize: 18, color: Colors.grey),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: _checkBiometric,
+                icon: const Icon(Icons.fingerprint),
+                label: const Text('Usa Biometria'),
+              )
+            ],
+          ),
         ),
       );
     }
-
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        }
-
-        if (snapshot.hasData && snapshot.data != null) {
-          return const WalletAppScaffold();
-        }
-
-        return const AuthScreen();
-      },
-    );
+    return widget.child;
   }
 }
