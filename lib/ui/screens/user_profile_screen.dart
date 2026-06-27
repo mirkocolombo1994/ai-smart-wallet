@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../screens/auth_screen.dart';
-import '../../main.dart'; // Per InitialDecisionScreen o un riavvio completo.
+// Per InitialDecisionScreen o un riavvio completo.
 
 class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({super.key});
