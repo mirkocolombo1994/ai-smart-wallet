@@ -13,11 +13,14 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    final actualTxs = state.transactions.where((tx) => !tx.isProjected).toList();
+    final actualTxs = state.transactions
+        .where((tx) => !tx.isProjected)
+        .toList();
 
     // Liste di transazioni
-    actualTxs.sort((a, b) => b.date.compareTo(a.date)); // decrescente (ultimi movimenti)
+    actualTxs.sort(
+      (a, b) => b.date.compareTo(a.date),
+    ); // decrescente (ultimi movimenti)
     final recentActual = actualTxs.take(4).toList();
 
     final now = DateTime.now();
@@ -27,10 +30,13 @@ class DashboardScreen extends StatelessWidget {
     final forecastTxs = state.transactions.where((tx) {
       return tx.isProjected &&
           tx.associatedTransactionId == null && // Hide concretized projections
-          (tx.date.isAfter(todayStart) || tx.date.isAtSameMomentAs(todayStart)) &&
+          (tx.date.isAfter(todayStart) ||
+              tx.date.isAtSameMomentAs(todayStart)) &&
           tx.date.isBefore(endRange);
     }).toList();
-    forecastTxs.sort((a, b) => a.date.compareTo(b.date)); // crescente (prossime scadenze)
+    forecastTxs.sort(
+      (a, b) => a.date.compareTo(b.date),
+    ); // crescente (prossime scadenze)
     final upcomingForecast = forecastTxs.take(4).toList();
 
     return SingleChildScrollView(
@@ -47,17 +53,26 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   Text(
                     AppStrings.get('welcome'),
-                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                    style: const TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 12,
+                    ),
                   ),
                   Row(
                     children: [
                       Text(
                         AppStrings.get('smartWallet'),
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF10B981).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
@@ -70,19 +85,24 @@ class DashboardScreen extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                      )
+                      ),
                     ],
-                  )
+                  ),
                 ],
               ),
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.bar_chart_rounded, color: Color(0xFFF59E0B)),
+                    icon: const Icon(
+                      Icons.bar_chart_rounded,
+                      color: Color(0xFFF59E0B),
+                    ),
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => MonthlyReportScreen(state: state)),
+                        MaterialPageRoute(
+                          builder: (_) => MonthlyReportScreen(state: state),
+                        ),
                       );
                     },
                   ),
@@ -91,7 +111,9 @@ class DashboardScreen extends StatelessWidget {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => SettingsScreen(state: state)),
+                        MaterialPageRoute(
+                          builder: (_) => SettingsScreen(state: state),
+                        ),
                       );
                     },
                   ),
@@ -110,6 +132,10 @@ class DashboardScreen extends StatelessWidget {
                   state.saldoEffettivoOdierno,
                   const Color(0xFF10B981),
                   'Fino ad oggi',
+                  onTap: () {
+                    state.changeLedgerFilter('actual');
+                    state.changeTab(3);
+                  },
                 ),
               ),
               const SizedBox(width: 12),
@@ -119,6 +145,10 @@ class DashboardScreen extends StatelessWidget {
                   state.saldoPrevistoOdierno,
                   const Color(0xFF38BDF8),
                   'Budget ad oggi',
+                  onTap: () {
+                    state.changeLedgerFilter('projected');
+                    state.changeTab(3);
+                  },
                 ),
               ),
             ],
@@ -131,7 +161,9 @@ class DashboardScreen extends StatelessWidget {
                 child: _buildBalanceCard(
                   AppStrings.get('balanceDiff'),
                   state.differenzaSaldiOdierna,
-                  state.differenzaSaldiOdierna >= 0 ? const Color(0xFF10B981) : const Color(0xFFF43F5E),
+                  state.differenzaSaldiOdierna >= 0
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFF43F5E),
                   'Effettivo - Previsto',
                 ),
               ),
@@ -142,6 +174,9 @@ class DashboardScreen extends StatelessWidget {
                   state.speseCartaCreditoMeseCorrente,
                   const Color(0xFFF59E0B),
                   'Prec: ${formatCurrency(state.speseCartaCreditoMesePrecedente)}',
+                  onTap: () {
+                    state.changeTab(4); // Vai a tab Carte di Credito
+                  },
                 ),
               ),
             ],
@@ -196,9 +231,12 @@ class DashboardScreen extends StatelessWidget {
                 },
                 child: Text(
                   AppStrings.get('seeAll'),
-                  style: const TextStyle(color: Color(0xFF10B981), fontSize: 12),
+                  style: const TextStyle(
+                    color: Color(0xFF10B981),
+                    fontSize: 12,
+                  ),
                 ),
-              )
+              ),
             ],
           ),
           if (recentActual.isEmpty)
@@ -207,7 +245,10 @@ class DashboardScreen extends StatelessWidget {
               child: Center(
                 child: Text(
                   AppStrings.get('noTransactions'),
-                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                  ),
                 ),
               ),
             )
@@ -247,9 +288,12 @@ class DashboardScreen extends StatelessWidget {
                 },
                 child: Text(
                   AppStrings.get('seeAll'),
-                  style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 12),
+                  style: const TextStyle(
+                    color: Color(0xFF38BDF8),
+                    fontSize: 12,
+                  ),
                 ),
-              )
+              ),
             ],
           ),
           if (upcomingForecast.isEmpty)
@@ -258,7 +302,10 @@ class DashboardScreen extends StatelessWidget {
               child: Center(
                 child: Text(
                   AppStrings.get('noForecastTransactions'),
-                  style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                  ),
                 ),
               ),
             )
@@ -285,43 +332,50 @@ class DashboardScreen extends StatelessWidget {
     String title,
     double value,
     Color accentColor,
-    String subtitle,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF1E293B),
-            const Color(0xFF0F172A).withValues(alpha: 0.4),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    String subtitle, {
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF1E293B),
+              const Color(0xFF0F172A).withValues(alpha: 0.4),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF334155), width: 0.8),
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF334155), width: 0.8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            formatCurrency(value),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: accentColor,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(color: Color(0xFF64748B), fontSize: 9)),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              formatCurrency(value),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: accentColor,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: const TextStyle(color: Color(0xFF64748B), fontSize: 9),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -11,16 +11,24 @@ class LedgerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Filtra transazioni
-    final List<Transaction> filtered = state.transactions.where((tx) {
-      if (tx.isProjected && tx.associatedTransactionId != null) return false; // Hide concretized projections
+    final List<Transaction> filtered = [];
+    final List<Transaction> concretized = [];
 
-      if (state.ledgerFilter == 'projected') return tx.isProjected;
-      if (state.ledgerFilter == 'actual') return !tx.isProjected;
-      return true;
-    }).toList();
+    for (var tx in state.transactions) {
+      if (tx.isProjected && tx.associatedTransactionId != null) {
+        if (state.ledgerFilter == 'projected') {
+          concretized.add(tx);
+        }
+      } else {
+        if (state.ledgerFilter == 'projected' && tx.isProjected) filtered.add(tx);
+        else if (state.ledgerFilter == 'actual' && !tx.isProjected) filtered.add(tx);
+        else if (state.ledgerFilter == 'all') filtered.add(tx);
+      }
+    }
 
     // Ordina per data decrescente
     filtered.sort((a, b) => b.date.compareTo(a.date));
+    concretized.sort((a, b) => b.date.compareTo(a.date));
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -55,22 +63,43 @@ class LedgerScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           Expanded(
-            child: filtered.isEmpty
+            child: filtered.isEmpty && concretized.isEmpty
                 ? Center(
                     child: Text(
                       AppStrings.get('noTransactions'),
                       style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                     ),
                   )
-                : ListView.builder(
-                    itemCount: filtered.length,
-                    itemBuilder: (context, idx) {
-                      return TransactionListItem(
-                        transaction: filtered[idx],
-                        state: state,
-                        showActions: true,
-                      );
-                    },
+                : ListView(
+                    children: [
+                      ...filtered.map((tx) => TransactionListItem(
+                            transaction: tx,
+                            state: state,
+                            showActions: true,
+                          )),
+                      if (concretized.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.only(top: 24, bottom: 8, left: 4),
+                          child: Text(
+                            'CONCRETIZZATI',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF94A3B8),
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                        ),
+                        ...concretized.map((tx) => Opacity(
+                              opacity: 0.5,
+                              child: TransactionListItem(
+                                transaction: tx,
+                                state: state,
+                                showActions: false,
+                              ),
+                            )),
+                      ]
+                    ],
                   ),
           )
         ],
