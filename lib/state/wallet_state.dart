@@ -14,6 +14,7 @@ class WalletState extends ChangeNotifier {
   static const String _ccStartDayKey = 'cc_start_day';
   static const String _ccPaymentDayKey = 'cc_payment_day';
   static const String _languageKey = 'app_language';
+  static const String _initialBalanceKey = 'initial_balance';
 
   int _currentTab = 0;
   int get currentTab => _currentTab;
@@ -35,6 +36,9 @@ class WalletState extends ChangeNotifier {
 
   int _ccPaymentDay = 15;
   int get ccPaymentDay => _ccPaymentDay;
+
+  double _initialBalance = 0.0;
+  double get initialBalance => _initialBalance;
 
   WalletState() {
     _init();
@@ -97,6 +101,7 @@ class WalletState extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _ccStartDay = prefs.getInt(_ccStartDayKey) ?? 1;
       _ccPaymentDay = prefs.getInt(_ccPaymentDayKey) ?? 15;
+      _initialBalance = prefs.getDouble(_initialBalanceKey) ?? 0.0;
       
       final savedLang = prefs.getString(_languageKey);
       if (savedLang == 'en') {
@@ -141,6 +146,9 @@ class WalletState extends ChangeNotifier {
              _savingsGoals.clear();
              _savingsGoals.addAll(fbGoals.map((item) => SavingsGoal.fromJson(item as Map<String, dynamic>)));
           }
+          if (data['initialBalance'] != null) {
+            _initialBalance = (data['initialBalance'] as num).toDouble();
+          }
         }
       }
 
@@ -159,6 +167,7 @@ class WalletState extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_ccStartDayKey, _ccStartDay);
       await prefs.setInt(_ccPaymentDayKey, _ccPaymentDay);
+      await prefs.setDouble(_initialBalanceKey, _initialBalance);
 
       final String serialized = jsonEncode(_transactions.map((tx) => tx.toJson()).toList());
       await prefs.setString(_prefsKey, serialized);
@@ -172,6 +181,7 @@ class WalletState extends ChangeNotifier {
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'transactions': _transactions.map((tx) => tx.toJson()).toList(),
           'savingsGoals': _savingsGoals.map((g) => g.toJson()).toList(),
+          'initialBalance': _initialBalance,
           'updatedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       }
@@ -318,7 +328,7 @@ class WalletState extends ChangeNotifier {
   double get saldoEffettivoOdierno {
     final now = DateTime.now();
     final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    double total = 0.0;
+    double total = _initialBalance;
     for (var tx in _transactions) {
       if (!tx.isProjected && tx.date.isBefore(todayEnd)) {
         if (tx.type == TransactionType.income) {
@@ -334,7 +344,7 @@ class WalletState extends ChangeNotifier {
   double get saldoPrevistoOdierno {
     final now = DateTime.now();
     final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
-    double total = 0.0;
+    double total = _initialBalance;
     for (var tx in _transactions) {
       if (tx.date.isBefore(todayEnd)) {
         if (tx.isProjected) {
@@ -547,6 +557,13 @@ class WalletState extends ChangeNotifier {
     }
 
     return timelinePoints;
+  }
+
+  // ----- INITIAL BALANCE -----
+  Future<void> setInitialBalance(double balance) async {
+    _initialBalance = balance;
+    await _saveToPrefs();
+    notifyListeners();
   }
 
   // ----- SAVINGS GOALS METHODS -----

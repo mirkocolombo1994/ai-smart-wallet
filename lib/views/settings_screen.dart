@@ -84,6 +84,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
             ),
+            // Saldo Iniziale
+            _buildSectionTitle('Saldo Iniziale', Icons.account_balance_wallet),
+            Card(
+              color: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: ListTile(
+                title: const Text('Modifica Saldo Iniziale'),
+                subtitle: Text('Attuale: €${widget.state.initialBalance.toStringAsFixed(2)}'),
+                trailing: const Icon(Icons.edit, color: Colors.white54),
+                onTap: () => _showInitialBalanceDialog(context),
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Impostazioni Carta
@@ -207,6 +219,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             title,
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showInitialBalanceDialog(BuildContext context) {
+    final TextEditingController controller = TextEditingController(text: widget.state.initialBalance.toString());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('Imposta Saldo Iniziale'),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            hintText: '0.00',
+            prefixText: '€ ',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppStrings.get('cancel'), style: const TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1)),
+            onPressed: () {
+              final val = double.tryParse(controller.text) ?? 0.0;
+              widget.state.setInitialBalance(val);
+              Navigator.pop(ctx);
+              setState(() {}); // refresh the settings screen subtitle
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(AppStrings.get('settingsSaved'))),
+              );
+            },
+            child: Text(AppStrings.get('save')),
           ),
         ],
       ),
