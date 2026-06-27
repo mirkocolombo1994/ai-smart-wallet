@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../data/mock_data.dart';
 import '../models/transaction.dart';
+import '../models/savings_goal.dart';
 import '../constants/app_strings.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// Gestore globale dello stato dell'applicazione (MVVM / Controller)
 class WalletState extends ChangeNotifier {
@@ -23,6 +26,9 @@ class WalletState extends ChangeNotifier {
 
   final List<Transaction> _transactions = [];
   List<Transaction> get transactions => List.unmodifiable(_transactions);
+
+  final List<SavingsGoal> _savingsGoals = [];
+  List<SavingsGoal> get savingsGoals => List.unmodifiable(_savingsGoals);
 
   int _ccStartDay = 1;
   int get ccStartDay => _ccStartDay;
@@ -62,8 +68,16 @@ class WalletState extends ChangeNotifier {
 
   Future<void> deleteAllData() async {
     _transactions.clear();
+    _savingsGoals.clear();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefsKey);
+    await prefs.remove('savings_goals');
+    
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).delete();
+    }
+    
     notifyListeners();
   }
 
@@ -100,12 +114,42 @@ class WalletState extends ChangeNotifier {
           decoded.map((item) => Transaction.fromJson(item as Map<String, dynamic>)),
         );
       } else {
-        // Se non c'è nulla in memoria locale, carichiamo il mock
         _loadInitialMockData();
-        await _saveToPrefs();
       }
+
+      final goalsString = prefs.getString('savings_goals');
+      if (goalsString != null && goalsString.isNotEmpty) {
+        final List<dynamic> decoded = jsonDecode(goalsString);
+        _savingsGoals.clear();
+        _savingsGoals.addAll(
+          decoded.map((item) => SavingsGoal.fromJson(item as Map<String, dynamic>)),
+        );
+      }
+
+      // Try to sync with Firebase if logged in
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          final data = doc.data()!;
+          if (data['transactions'] != null) {
+             final List<dynamic> fbTxs = data['transactions'];
+             _transactions.clear();
+             _transactions.addAll(fbTxs.map((item) => Transaction.fromJson(item as Map<String, dynamic>)));
+          }
+          if (data['savingsGoals'] != null) {
+             final List<dynamic> fbGoals = data['savingsGoals'];
+             _savingsGoals.clear();
+             _savingsGoals.addAll(fbGoals.map((item) => SavingsGoal.fromJson(item as Map<String, dynamic>)));
+          }
+        }
+      }
+
+      // save back to sync prefs and possible new data from mock
+      await _saveToPrefs();
+
     } catch (e) {
-      debugPrint('Errore nel caricamento da SharedPreferences: $e');
+      debugPrint('Errore nel caricamento: $e');
       _loadInitialMockData();
     }
     notifyListeners();
@@ -119,6 +163,19 @@ class WalletState extends ChangeNotifier {
 
       final String serialized = jsonEncode(_transactions.map((tx) => tx.toJson()).toList());
       await prefs.setString(_prefsKey, serialized);
+      
+      final String serializedGoals = jsonEncode(_savingsGoals.map((g) => g.toJson()).toList());
+      await prefs.setString('savings_goals', serializedGoals);
+
+      // Sync with Firebase
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'transactions': _transactions.map((tx) => tx.toJson()).toList(),
+          'savingsGoals': _savingsGoals.map((g) => g.toJson()).toList(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+      }
     } catch (e) {
       debugPrint('Errore nel salvataggio su SharedPreferences: $e');
     }
@@ -466,4 +523,31 @@ class WalletState extends ChangeNotifier {
 
     return timelinePoints;
   }
+
+  // ----- SAVINGS GOALS METHODS -----
+
+  bool addSavingsGoal(SavingsGoal goal) {
+    _savingsGoals.add(goal);
+    _saveToPrefs();
+    notifyListeners();
+    return true;
+  }
+
+  void deleteSavingsGoal(String id) {
+    _savingsGoals.removeWhere((g) => g.id == id);
+    _saveToPrefs();
+    notifyListeners();
+  }
+
+  bool updateSavingsGoal(SavingsGoal updatedGoal) {
+    final index = _savingsGoals.indexWhere((g) => g.id == updatedGoal.id);
+    if (index != -1) {
+      _savingsGoals[index] = updatedGoal;
+      _saveToPrefs();
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
 }
+

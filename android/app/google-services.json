@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "370161722732",
+    "project_id": "ai-smart-wallet-93262",
+    "storage_bucket": "ai-smart-wallet-93262.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:370161722732:android:e4e66309ad59dc2c073f49",
+        "android_client_info": {
+          "package_name": "com.mirkocolombo.aismartwallet.ai_smart_wallet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtNFeMsyYWsVYKfPGxS-37_YXnqK5dtKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

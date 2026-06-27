@@ -3,7 +3,9 @@ import '../constants/app_strings.dart';
 import '../state/wallet_state.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/transaction_list_item.dart';
+import '../ui/widgets/goal_card.dart';
 import 'settings_screen.dart';
+import '../ui/screens/monthly_report_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final WalletState state;
@@ -73,14 +75,27 @@ class DashboardScreen extends StatelessWidget {
                   )
                 ],
               ),
-              IconButton(
-                icon: const Icon(Icons.settings, color: Color(0xFF94A3B8)),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => SettingsScreen(state: state)),
-                  );
-                },
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.bar_chart_rounded, color: Color(0xFFF59E0B)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => MonthlyReportScreen(state: state)),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings, color: Color(0xFF94A3B8)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => SettingsScreen(state: state)),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -132,6 +147,34 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
+
+          // LISTA OBIETTIVI DI RISPARMIO (Savings Goals)
+          if (state.savingsGoals.isNotEmpty) ...[
+            const Text(
+              'OBIETTIVI DI RISPARMIO',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFF59E0B),
+                letterSpacing: 1.1,
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 140, // Altezza fissa per lo scrolling orizzontale
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: state.savingsGoals.length,
+                itemBuilder: (context, idx) {
+                  return SizedBox(
+                    width: 260, // Larghezza fissa per le card
+                    child: GoalCard(goal: state.savingsGoals[idx]),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
 
           // LISTA 1: Movimenti Effettivi (Storico)
           Row(
